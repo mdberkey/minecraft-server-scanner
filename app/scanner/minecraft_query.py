@@ -1,6 +1,7 @@
 import socket
 import json
 import struct
+import select
 
 class MinecraftQuery:
     @staticmethod
@@ -11,46 +12,38 @@ class MinecraftQuery:
             sock.connect((ip, port))
             
             server_addr = ip.encode('utf-8')
-            packed_addr = struct.pack('B', len(server_addr)) + server_addr
-            packed_port = struct.pack('>H', port)
-            packet = b'\x00' + packed_addr + packed_port + b'\x01'
+            handshake = b'\x00' + b'\x2f' + struct.pack('B', len(server_addr)) + server_addr
+            handshake += struct.pack('>H', port) + b'\x01'
             
-            packet_len = struct.pack('B', len(packet))
-            sock.sendall(packet_len + packet)
-            
+            sock.sendall(struct.pack('B', len(handshake)) + handshake)
             sock.sendall(b'\x01\x00')
             
-            length = MinecraftQuery._read_varint(sock)
-            if length < 1:
+            import time
+            time.sleep(0.3)
+            
+            sock.setblocking(False)
+            ready = select.select([sock], [], [], timeout)
+            if not ready[0]:
                 return None
             
-            packet_id = MinecraftQuery._read_varint(sock)
-            if packet_id < 0:
+            data = sock.recv(65535)
+            if not data:
                 return None
             
-            json_length = MinecraftQuery._read_varint(sock)
-            json_data = sock.recv(json_length).decode('utf-8')
+            json_start = data.find(b'{')
+            json_end = data.rfind(b'}') + 1
+            if json_start < 0 or json_end <= json_start:
+                return None
+            
+            json_bytes = data[json_start:json_end]
+            json_str = json_bytes.decode('utf-8', errors='replace')
+            response = json.loads(json_str)
             
             sock.close()
-            
-            response = json.loads(json_data)
             return MinecraftQuery._parse_response(response, ip, port)
             
-        except (socket.timeout, socket.error, json.JSONDecodeError, Exception):
+        except Exception:
             return None
-
-    @staticmethod
-    def _read_varint(sock):
-        result = 0
-        for i in range(5):
-            byte = sock.recv(1)
-            if len(byte) == 0:
-                return -1
-            byte = byte[0]
-            result |= (byte & 0x7F) << (7 * i)
-            if not byte & 0x80:
-                return result
-        return -1
 
     @staticmethod
     def _parse_response(response, ip, port):
@@ -71,7 +64,7 @@ class MinecraftQuery:
             if isinstance(desc, dict):
                 result['motd'] = MinecraftQuery._parse_chat(desc)
             else:
-                result['motd'] = desc
+                result['motd'] = str(desc)
         
         if 'version' in response:
             version = response['version']
