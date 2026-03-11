@@ -19,15 +19,20 @@ class ScanScheduler:
     def _run_scan_loop(self):
         while self.running:
             try:
+                next_run = datetime.now() + timedelta(seconds=self.scan_interval)
+                print(f"[{datetime.now()}] Waiting until {next_run} for next scheduled scan...")
+                
+                if self.running:
+                    time.sleep(self.scan_interval)
+                
+                if not self.running:
+                    break
+                    
                 print(f"[{datetime.now()}] Starting scheduled scan...")
                 self.scanner.run_full_scan()
-                next_run = datetime.now() + timedelta(seconds=self.scan_interval)
-                print(f"[{datetime.now()}] Scan complete. Next scan at {next_run}")
+                print(f"[{datetime.now()}] Scan complete.")
             except Exception as e:
                 print(f"[{datetime.now()}] Scan error: {e}")
-            
-            if self.running:
-                time.sleep(self.scan_interval)
 
     def start(self):
         if self.running:

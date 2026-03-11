@@ -12,7 +12,7 @@
             --bs-body-color: #eee;
         }
         body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
-        .server-favicon { width: 64px; height: 64px; object-fit: contain; background: #2a2a3e; border-radius: 8px; padding: 4px; }
+        .server-favicon { width: 96px; height: 96px; object-fit: contain; background: #2a2a3e; border-radius: 8px; padding: 4px; }
         .table-responsive { max-height: 70vh; }
         .sort-header { cursor: pointer; }
         .sort-header:hover { background-color: #2a2a4a; }
@@ -56,12 +56,6 @@
                             <input type="text" class="form-control" id="search" placeholder="IP, MOTD, Version">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Country</label>
-                            <select class="form-select" id="country-filter">
-                                <option value="">All Countries</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label class="form-label">Version</label>
                             <select class="form-select" id="version-filter">
                                 <option value="">All Versions</option>
@@ -69,19 +63,27 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Min Players</label>
-                            <input type="number" class="form-control" id="min-players" min="0">
+                            <input type="number" class="form-control" id="min-players" min="0" placeholder="Current min">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Max Players</label>
-                            <input type="number" class="form-control" id="max-players" min="0">
+                            <input type="number" class="form-control" id="max-players" min="0" placeholder="Current max">
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="vanilla-only">
+                            <label class="form-check-label">Vanilla</label>
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="modded-only">
-                            <label class="form-check-label">Modded Only</label>
+                            <label class="form-check-label">Modded</label>
                         </div>
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="whitelist-only">
-                            <label class="form-check-label">Whitelist Only</label>
+                            <input type="checkbox" class="form-check-input" id="whitelist">
+                            <label class="form-check-label">Whitelist</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="no-whitelist">
+                            <label class="form-check-label">No Whitelist</label>
                         </div>
                         <button class="btn btn-primary w-100" id="apply-filters">
                             <i class="bi bi-search"></i> Apply Filters
@@ -114,15 +116,14 @@
                                         <th>MOTD</th>
                                         <th class="sort-header" data-sort="version">Version <i class="bi bi-arrow-down-up sort-icon"></i></th>
                                         <th class="sort-header" data-sort="players_online">Players <i class="bi bi-arrow-down-up sort-icon"></i></th>
-                                        <th>Min/Max Ever</th>
-                                        <th class="sort-header" data-sort="country">Country <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th>Historic Min/Max Players</th>
                                         <th>Modded</th>
                                         <th>Whitelist</th>
                                         <th class="sort-header" data-sort="date_added">Added <i class="bi bi-arrow-down-up sort-icon"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody id="servers-table-body">
-                                    <tr><td colspan="11" class="text-center">Loading...</td></tr>
+                                    <tr><td colspan="10" class="text-center">Loading...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -148,14 +149,6 @@
         async function loadFilters() {
             const resp = await fetch('/api/filters');
             const data = await resp.json();
-            
-            const countrySelect = document.getElementById('country-filter');
-            data.countries.sort().forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c;
-                opt.textContent = c;
-                countrySelect.appendChild(opt);
-            });
             
             const versionSelect = document.getElementById('version-filter');
             data.versions.sort().forEach(v => {
@@ -191,14 +184,13 @@
             data.servers.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${s.favicon ? `<img src="${s.favicon}" class="server-favicon" alt="">` : '<i class="bi bi-question-circle text-muted" style="font-size: 2rem;"></i>'}</td>
+                    <td>${s.favicon ? `<img src="${s.favicon}" class="server-favicon" alt="">` : '<i class="bi bi-question-circle text-muted" style="font-size: 4rem;"></i>'}</td>
                     <td>${s.ip}</td>
                     <td>${s.port}</td>
                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${s.motd || ''}</td>
                     <td>${s.version || 'Unknown'} ${s.is_modded ? '<span class="badge bg-warning">Modded</span>' : ''}</td>
                     <td>${s.players_online}</td>
-                    <td>${s.players_min_ever}-${s.players_max_ever}</td>
-                    <td>${s.country || 'Unknown'}</td>
+                    <td>${s.players_min_ever || 0}-${s.players_max_ever || 0}</td>
                     <td>${s.is_modded ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>'}</td>
                     <td>${s.whitelist ? '<i class="bi bi-lock text-warning"></i>' : '<i class="bi bi-unlock text-success"></i>'}</td>
                     <td>${new Date(s.date_added).toLocaleDateString()}</td>
@@ -235,9 +227,6 @@
             const search = document.getElementById('search').value.trim();
             if (search) filters.search = search;
             
-            const country = document.getElementById('country-filter').value;
-            if (country) filters.country = country;
-            
             const version = document.getElementById('version-filter').value;
             if (version) filters.version = version;
             
@@ -247,8 +236,10 @@
             const maxPlayers = document.getElementById('max-players').value;
             if (maxPlayers) filters.max_players = maxPlayers;
             
+            filters.vanilla_only = document.getElementById('vanilla-only').checked;
             filters.modded_only = document.getElementById('modded-only').checked;
-            filters.whitelist_only = document.getElementById('whitelist-only').checked;
+            filters.whitelist = document.getElementById('whitelist').checked;
+            filters.no_whitelist = document.getElementById('no-whitelist').checked;
             
             currentPage = 1;
             loadServers(1);
@@ -258,12 +249,13 @@
         
         document.getElementById('reset-filters').addEventListener('click', () => {
             document.getElementById('search').value = '';
-            document.getElementById('country-filter').value = '';
             document.getElementById('version-filter').value = '';
             document.getElementById('min-players').value = '';
             document.getElementById('max-players').value = '';
+            document.getElementById('vanilla-only').checked = false;
             document.getElementById('modded-only').checked = false;
-            document.getElementById('whitelist-only').checked = false;
+            document.getElementById('whitelist').checked = false;
+            document.getElementById('no-whitelist').checked = false;
             filters = {};
             currentPage = 1;
             loadServers(1);

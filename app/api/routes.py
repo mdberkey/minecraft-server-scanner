@@ -20,12 +20,13 @@ def get_servers():
     search = request.args.get('search', '', type=str)
     sort_by = request.args.get('sort_by', 'date_added', type=str)
     sort_order = request.args.get('sort_order', 'desc', type=str)
-    country_filter = request.args.get('country', '', type=str)
     version_filter = request.args.get('version', '', type=str)
     min_players = request.args.get('min_players', None, type=int)
     max_players = request.args.get('max_players', None, type=int)
+    vanilla_only = request.args.get('vanilla_only', 'false', type=str).lower() == 'true'
     modded_only = request.args.get('modded_only', 'false', type=str).lower() == 'true'
-    whitelist_only = request.args.get('whitelist_only', 'false', type=str).lower() == 'true'
+    whitelist = request.args.get('whitelist', 'false', type=str).lower() == 'true'
+    no_whitelist = request.args.get('no_whitelist', 'false', type=str).lower() == 'true'
     
     query = session.query(MinecraftServer)
     
@@ -37,9 +38,6 @@ def get_servers():
             (MinecraftServer.version.like(search_pattern))
         )
     
-    if country_filter:
-        query = query.filter(MinecraftServer.country.ilike(f'%{country_filter}%'))
-    
     if version_filter:
         query = query.filter(MinecraftServer.version.ilike(f'%{version_filter}%'))
     
@@ -49,17 +47,22 @@ def get_servers():
     if max_players is not None:
         query = query.filter(MinecraftServer.players_online <= max_players)
     
+    if vanilla_only:
+        query = query.filter(MinecraftServer.is_modded == False)
+    
     if modded_only:
         query = query.filter(MinecraftServer.is_modded == True)
     
-    if whitelist_only:
+    if whitelist:
         query = query.filter(MinecraftServer.whitelist == True)
+    
+    if no_whitelist:
+        query = query.filter(MinecraftServer.whitelist == False)
     
     valid_sort_columns = {
         'date_added': MinecraftServer.date_added,
         'players_online': MinecraftServer.players_online,
         'version': MinecraftServer.version,
-        'country': MinecraftServer.country,
         'ip': MinecraftServer.ip,
     }
     
@@ -111,12 +114,6 @@ def get_stats():
         MinecraftServer.whitelist == True
     ).scalar()
     
-    countries = session.query(
-        MinecraftServer.country, func.count(MinecraftServer.id)
-    ).filter(
-        MinecraftServer.country.isnot(None)
-    ).group_by(MinecraftServer.country).all()
-    
     session.close()
     
     return jsonify({
@@ -124,17 +121,12 @@ def get_stats():
         'total_players': total_players,
         'modded_servers': modded_servers,
         'whitelist_servers': whitelist_servers,
-        'countries': [{'country': c[0], 'count': c[1]} for c in countries[:20]]
     })
 
 
 @api.route('/filters', methods=['GET'])
 def get_filters():
     session = get_db_session()
-    
-    countries = session.query(MinecraftServer.country).filter(
-        MinecraftServer.country.isnot(None)
-    ).distinct().all()
     
     versions = session.query(MinecraftServer.version).filter(
         MinecraftServer.version.isnot(None)
@@ -143,6 +135,5 @@ def get_filters():
     session.close()
     
     return jsonify({
-        'countries': [c[0] for c in countries if c[0]],
         'versions': [v[0] for v in versions if v[0]]
     })

@@ -19,7 +19,6 @@ class MinecraftServer(Base):
     players_online = Column(Integer, default=0)
     players_max_ever = Column(Integer, default=0)
     players_min_ever = Column(Integer, default=0)
-    country = Column(String(64), nullable=True)
     date_added = Column(DateTime, default=datetime.utcnow)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -36,7 +35,6 @@ class MinecraftServer(Base):
             'players_online': self.players_online,
             'players_max_ever': self.players_max_ever,
             'players_min_ever': self.players_min_ever,
-            'country': self.country,
             'date_added': self.date_added.isoformat() if self.date_added else None,
             'last_updated': self.last_updated.isoformat() if self.last_updated else None,
         }
