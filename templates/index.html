@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Scanner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --bs-body-bg: #1a1a2e;
+            --bs-body-color: #eee;
+        }
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+        .server-favicon { width: 64px; height: 64px; object-fit: contain; background: #2a2a3e; border-radius: 8px; padding: 4px; }
+        .table-responsive { max-height: 70vh; }
+        .sort-header { cursor: pointer; }
+        .sort-header:hover { background-color: #2a2a4a; }
+        .sort-icon { margin-left: 5px; }
+        .filters-card { position: sticky; top: 0; z-index: 100; background: #252540; border: 1px solid #3a3a5a; }
+        .card { background: #252540; border: 1px solid #3a3a5a; }
+        .card-header { background: #2a2a4a; border-bottom: 1px solid #3a3a5a; }
+        .card-footer { background: #2a2a4a; border-top: 1px solid #3a3a5a; }
+        .table { color: #eee; }
+        .table-dark { --bs-table-bg: #2a2a4a; }
+        .table-striped > tbody > tr:nth-of-type(odd) { background: #1f1f3a; }
+        .table-hover > tbody > tr:hover { background: #2a2a4a; }
+        .form-control, .form-select { background: #1a1a2e; border-color: #3a3a5a; color: #eee; }
+        .form-control:focus, .form-select:focus { background: #252540; border-color: #5a5a8a; color: #eee; }
+        .navbar { background: linear-gradient(90deg, #1a1a2e 0%, #2a2a4a 100%) !important; }
+        .pagination .page-link { background: #252540; border-color: #3a3a5a; color: #eee; }
+        .pagination .page-item.active .page-link { background: #4a4a8a; border-color: #5a5a8a; }
+        .pagination .page-link:hover { background: #3a3a5a; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-hdd-rack"></i> Minecraft Server Scanner
+            </span>
+            <span class="navbar-text text-light" id="stats-bar"></span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card filters-card">
+                    <div class="card-header">
+                        <i class="bi bi-funnel"></i> Filters
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" placeholder="IP, MOTD, Version">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Country</label>
+                            <select class="form-select" id="country-filter">
+                                <option value="">All Countries</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Version</label>
+                            <select class="form-select" id="version-filter">
+                                <option value="">All Versions</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Min Players</label>
+                            <input type="number" class="form-control" id="min-players" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Max Players</label>
+                            <input type="number" class="form-control" id="max-players" min="0">
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="modded-only">
+                            <label class="form-check-label">Modded Only</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="whitelist-only">
+                            <label class="form-check-label">Whitelist Only</label>
+                        </div>
+                        <button class="btn btn-primary w-100" id="apply-filters">
+                            <i class="bi bi-search"></i> Apply Filters
+                        </button>
+                        <button class="btn btn-secondary w-100 mt-2" id="reset-filters">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-server"></i> Servers</span>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-btn">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Favicon</th>
+                                        <th>IP</th>
+                                        <th>Port</th>
+                                        <th>MOTD</th>
+                                        <th class="sort-header" data-sort="version">Version <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="sort-header" data-sort="players_online">Players <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th>Min/Max Ever</th>
+                                        <th class="sort-header" data-sort="country">Country <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th>Modded</th>
+                                        <th>Whitelist</th>
+                                        <th class="sort-header" data-sort="date_added">Added <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="servers-table-body">
+                                    <tr><td colspan="11" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        <span id="pagination-info"></span>
+                        <nav>
+                            <ul class="pagination mb-0" id="pagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentSort = 'date_added';
+        let currentOrder = 'desc';
+        let filters = {};
+
+        async function loadFilters() {
+            const resp = await fetch('/api/filters');
+            const data = await resp.json();
+            
+            const countrySelect = document.getElementById('country-filter');
+            data.countries.sort().forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                countrySelect.appendChild(opt);
+            });
+            
+            const versionSelect = document.getElementById('version-filter');
+            data.versions.sort().forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                versionSelect.appendChild(opt);
+            });
+        }
+
+        async function loadStats() {
+            const resp = await fetch('/api/stats');
+            const data = await resp.json();
+            document.getElementById('stats-bar').textContent = 
+                `${data.total_servers.toLocaleString()} servers | ${data.total_players.toLocaleString()} players online`;
+        }
+
+        async function loadServers(page = 1) {
+            const params = new URLSearchParams({
+                page: page,
+                per_page: 20,
+                sort_by: currentSort,
+                sort_order: currentOrder,
+                ...filters
+            });
+            
+            const resp = await fetch(`/api/servers?${params}`);
+            const data = await resp.json();
+            
+            const tbody = document.getElementById('servers-table-body');
+            tbody.innerHTML = '';
+            
+            data.servers.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${s.favicon ? `<img src="${s.favicon}" class="server-favicon" alt="">` : '<i class="bi bi-question-circle text-muted" style="font-size: 2rem;"></i>'}</td>
+                    <td>${s.ip}</td>
+                    <td>${s.port}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${s.motd || ''}</td>
+                    <td>${s.version || 'Unknown'} ${s.is_modded ? '<span class="badge bg-warning">Modded</span>' : ''}</td>
+                    <td>${s.players_online}</td>
+                    <td>${s.players_min_ever}-${s.players_max_ever}</td>
+                    <td>${s.country || 'Unknown'}</td>
+                    <td>${s.is_modded ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>'}</td>
+                    <td>${s.whitelist ? '<i class="bi bi-lock text-warning"></i>' : '<i class="bi bi-unlock text-success"></i>'}</td>
+                    <td>${new Date(s.date_added).toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            updatePagination(data.pagination);
+        }
+
+        function updatePagination(pagination) {
+            document.getElementById('pagination-info').textContent = 
+                `Page ${pagination.page} of ${pagination.pages} (${pagination.total.toLocaleString()} servers)`;
+            
+            const paginationEl = document.getElementById('pagination');
+            paginationEl.innerHTML = '';
+            
+            for (let i = 1; i <= Math.min(pagination.pages, 10); i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === pagination.page ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+                li.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loadServers(i);
+                    currentPage = i;
+                });
+                paginationEl.appendChild(li);
+            }
+        }
+
+        function applyFilters() {
+            filters = {};
+            
+            const search = document.getElementById('search').value.trim();
+            if (search) filters.search = search;
+            
+            const country = document.getElementById('country-filter').value;
+            if (country) filters.country = country;
+            
+            const version = document.getElementById('version-filter').value;
+            if (version) filters.version = version;
+            
+            const minPlayers = document.getElementById('min-players').value;
+            if (minPlayers) filters.min_players = minPlayers;
+            
+            const maxPlayers = document.getElementById('max-players').value;
+            if (maxPlayers) filters.max_players = maxPlayers;
+            
+            filters.modded_only = document.getElementById('modded-only').checked;
+            filters.whitelist_only = document.getElementById('whitelist-only').checked;
+            
+            currentPage = 1;
+            loadServers(1);
+        }
+
+        document.getElementById('apply-filters').addEventListener('click', applyFilters);
+        
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('search').value = '';
+            document.getElementById('country-filter').value = '';
+            document.getElementById('version-filter').value = '';
+            document.getElementById('min-players').value = '';
+            document.getElementById('max-players').value = '';
+            document.getElementById('modded-only').checked = false;
+            document.getElementById('whitelist-only').checked = false;
+            filters = {};
+            currentPage = 1;
+            loadServers(1);
+        });
+        
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            loadServers(currentPage);
+            loadStats();
+        });
+        
+        document.querySelectorAll('.sort-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const sort = header.dataset.sort;
+                if (currentSort === sort) {
+                    currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort = sort;
+                    currentOrder = 'desc';
+                }
+                loadServers(currentPage);
+            });
+        });
+        
+        document.getElementById('search').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') applyFilters();
+        });
+
+        loadFilters();
+        loadStats();
+        loadServers(1);
+        
+        setInterval(loadStats, 60000);
+    </script>
+</body>
+</html>

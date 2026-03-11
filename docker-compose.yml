@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  minecraft-scanner:
+    build: .
+    container_name: minecraft-server-scanner
+    ports:
+      - "5000:5000"
+    volumes:
+      - scanner-data:/data
+    environment:
+      - DB_PATH=/data/servers.db
+      - SCAN_INTERVAL_HOURS=24
+      - SCAN_RATE=20000
+      - SECRET_KEY=change-this-to-a-random-secret-key
+    restart: unless-stopped
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    networks:
+      - scanner-network
+
+  scanner-scheduler:
+    build: .
+    container_name: minecraft-scanner-scheduler
+    volumes:
+      - scanner-data:/data
+    environment:
+      - DB_PATH=/data/servers.db
+      - SCAN_INTERVAL_HOURS=24
+      - SCAN_RATE=20000
+      - MASSCAN_PATH=/usr/local/bin/masscan
+      - EXCLUDE_FILE=/app/masscan/data/exclude.conf
+      - SCAN_OUTPUT=/data/scan_results.json
+    command: ["python", "run_scan.py"]
+    restart: unless-stopped
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    depends_on:
+      - minecraft-scanner
+    networks:
+      - scanner-network
+
+volumes:
+  scanner-data:
+
+networks:
+  scanner-network:
+    driver: bridge
