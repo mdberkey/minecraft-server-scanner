@@ -13,6 +13,7 @@ services:
       - SCAN_INTERVAL_HOURS=24
       - SCAN_RATE=20000
       - SECRET_KEY=change-this-to-a-random-secret-key
+      - RUN_SCAN_ON_START=false
     restart: unless-stopped
     cap_add:
       - NET_RAW

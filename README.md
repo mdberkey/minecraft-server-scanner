@@ -44,6 +44,7 @@ Access the web interface at `http://localhost:5000`.
 | `SECRET_KEY` | (random) | Flask secret key |
 | `MASSCAN_PATH` | `/usr/local/bin/masscan` | Path to masscan binary |
 | `EXCLUDE_FILE` | `/app/masscan/data/exclude.conf` | IP exclusion file |
+| `RUN_SCAN_ON_START` | `false` | Run masscan immediately on container startup |
 
 ## Manual Installation
 
