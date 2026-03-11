@@ -77,13 +77,14 @@
                             <input type="checkbox" class="form-check-input" id="modded-only">
                             <label class="form-check-label">Modded</label>
                         </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="whitelist">
-                            <label class="form-check-label">Whitelist</label>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="no-whitelist">
-                            <label class="form-check-label">No Whitelist</label>
+                        <div class="mb-3">
+                            <label class="form-label">Whitelist</label>
+                            <select class="form-select" id="whitelist-filter">
+                                <option value="">Any</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                                <option value="unknown">Unknown</option>
+                            </select>
                         </div>
                         <button class="btn btn-primary w-100" id="apply-filters">
                             <i class="bi bi-search"></i> Apply Filters
@@ -159,6 +160,16 @@
             });
         }
 
+        function getWhitelistDisplay(value) {
+            if (value === 'Yes') {
+                return '<i class="bi bi-lock text-warning"></i> Yes';
+            } else if (value === 'No') {
+                return '<i class="bi bi-unlock text-success"></i> No';
+            } else {
+                return '<i class="bi bi-question-circle text-muted"></i> Unknown';
+            }
+        }
+
         async function loadStats() {
             const resp = await fetch('/api/stats');
             const data = await resp.json();
@@ -167,20 +178,28 @@
         }
 
         async function loadServers(page = 1) {
-            const params = new URLSearchParams({
-                page: page,
-                per_page: 20,
-                sort_by: currentSort,
-                sort_order: currentOrder,
-                ...filters
-            });
-            
-            const resp = await fetch(`/api/servers?${params}`);
+            const params = new URLSearchParams();
+            params.append('page', page);
+            params.append('per_page', 20);
+            params.append('sort_by', currentSort);
+            params.append('sort_order', currentOrder);
+
+            if (filters.search) params.append('search', filters.search);
+            if (filters.version) params.append('version', filters.version);
+            if (filters.min_players) params.append('min_players', filters.min_players);
+            if (filters.max_players) params.append('max_players', filters.max_players);
+            if (filters.vanilla_only) params.append('vanilla_only', 'true');
+            if (filters.modded_only) params.append('modded_only', 'true');
+            if (filters.whitelist) params.append('whitelist', 'true');
+            if (filters.no_whitelist) params.append('no_whitelist', 'true');
+            if (filters.unknown_whitelist) params.append('unknown_whitelist', 'true');
+
+            const resp = await fetch(`/api/servers?${params.toString()}`);
             const data = await resp.json();
             
             const tbody = document.getElementById('servers-table-body');
             tbody.innerHTML = '';
-            
+
             data.servers.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -192,7 +211,7 @@
                     <td>${s.players_online}</td>
                     <td>${s.players_min_ever || 0}-${s.players_max_ever || 0}</td>
                     <td>${s.is_modded ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>'}</td>
-                    <td>${s.whitelist ? '<i class="bi bi-lock text-warning"></i>' : '<i class="bi bi-unlock text-success"></i>'}</td>
+                    <td>${getWhitelistDisplay(s.whitelist)}</td>
                     <td>${new Date(s.date_added).toLocaleDateString()}</td>
                 `;
                 tbody.appendChild(tr);
@@ -223,30 +242,37 @@
 
         function applyFilters() {
             filters = {};
-            
+
             const search = document.getElementById('search').value.trim();
             if (search) filters.search = search;
-            
+
             const version = document.getElementById('version-filter').value;
             if (version) filters.version = version;
-            
+
             const minPlayers = document.getElementById('min-players').value;
             if (minPlayers) filters.min_players = minPlayers;
-            
+
             const maxPlayers = document.getElementById('max-players').value;
             if (maxPlayers) filters.max_players = maxPlayers;
-            
+
             filters.vanilla_only = document.getElementById('vanilla-only').checked;
             filters.modded_only = document.getElementById('modded-only').checked;
-            filters.whitelist = document.getElementById('whitelist').checked;
-            filters.no_whitelist = document.getElementById('no-whitelist').checked;
             
+            const whitelist = document.getElementById('whitelist-filter').value;
+            if (whitelist === 'yes') {
+                filters.whitelist = true;
+            } else if (whitelist === 'no') {
+                filters.no_whitelist = true;
+            } else if (whitelist === 'unknown') {
+                filters.unknown_whitelist = true;
+            }
+
             currentPage = 1;
             loadServers(1);
         }
 
         document.getElementById('apply-filters').addEventListener('click', applyFilters);
-        
+
         document.getElementById('reset-filters').addEventListener('click', () => {
             document.getElementById('search').value = '';
             document.getElementById('version-filter').value = '';
@@ -254,8 +280,7 @@
             document.getElementById('max-players').value = '';
             document.getElementById('vanilla-only').checked = false;
             document.getElementById('modded-only').checked = false;
-            document.getElementById('whitelist').checked = false;
-            document.getElementById('no-whitelist').checked = false;
+            document.getElementById('whitelist-filter').value = '';
             filters = {};
             currentPage = 1;
             loadServers(1);

@@ -12,7 +12,7 @@ class MinecraftServer(Base):
     ip = Column(String(45), nullable=False, index=True)
     port = Column(Integer, nullable=False, default=25565)
     favicon = Column(Text, nullable=True)
-    whitelist = Column(Boolean, default=False)
+    whitelist = Column(String(10), default='Unknown')
     motd = Column(String(512), nullable=True)
     version = Column(String(128), nullable=True)
     is_modded = Column(Boolean, default=False)

@@ -13,7 +13,7 @@ A Docker-deployable application that scans the internet for Minecraft servers, s
   - Version and modded status
   - Players online, min/max ever seen
   - Country (via GeoIP)
-  - Whitelist status
+  - Whitelist status (Yes, No, or Unknown - since the scanner only pings servers and cannot definitively determine whitelist status)
   - Date added and last updated
 - **Web Interface**: Flask-based frontend with:
   - Paginated server table
@@ -119,7 +119,9 @@ minecraft-server-scanner/
 | `min_players` | Minimum players online |
 | `max_players` | Maximum players online |
 | `modded_only` | Show only modded servers |
-| `whitelist_only` | Show only whitelist servers |
+| `whitelist` | Show only servers with whitelist (Yes) |
+| `no_whitelist` | Show only servers without whitelist (No) |
+| `unknown_whitelist` | Show only servers with unknown whitelist status |
 
 ## License
 

@@ -51,7 +51,7 @@ class MinecraftQuery:
             'ip': ip,
             'port': port,
             'favicon': None,
-            'whitelist': False,
+            'whitelist': 'Unknown',
             'motd': None,
             'version': None,
             'is_modded': False,
@@ -76,9 +76,7 @@ class MinecraftQuery:
             players = response['players']
             result['players_online'] = players.get('online', 0)
             result['players_max'] = players.get('max', 0)
-            if players.get('enforced', False):
-                result['whitelist'] = True
-        
+
         if 'favicon' in response:
             result['favicon'] = response['favicon']
         

@@ -27,6 +27,7 @@ def get_servers():
     modded_only = request.args.get('modded_only', 'false', type=str).lower() == 'true'
     whitelist = request.args.get('whitelist', 'false', type=str).lower() == 'true'
     no_whitelist = request.args.get('no_whitelist', 'false', type=str).lower() == 'true'
+    unknown_whitelist = request.args.get('unknown_whitelist', 'false', type=str).lower() == 'true'
     
     query = session.query(MinecraftServer)
     
@@ -52,12 +53,15 @@ def get_servers():
     
     if modded_only:
         query = query.filter(MinecraftServer.is_modded == True)
-    
+
     if whitelist:
-        query = query.filter(MinecraftServer.whitelist == True)
-    
+        query = query.filter(MinecraftServer.whitelist == 'Yes')
+
     if no_whitelist:
-        query = query.filter(MinecraftServer.whitelist == False)
+        query = query.filter(MinecraftServer.whitelist == 'No')
+
+    if unknown_whitelist:
+        query = query.filter(MinecraftServer.whitelist == 'Unknown')
     
     valid_sort_columns = {
         'date_added': MinecraftServer.date_added,
@@ -104,18 +108,18 @@ def get_server(server_id):
 @api.route('/stats', methods=['GET'])
 def get_stats():
     session = get_db_session()
-    
+
     total_servers = session.query(func.count(MinecraftServer.id)).scalar()
     total_players = session.query(func.sum(MinecraftServer.players_online)).scalar() or 0
     modded_servers = session.query(func.count(MinecraftServer.id)).filter(
         MinecraftServer.is_modded == True
     ).scalar()
     whitelist_servers = session.query(func.count(MinecraftServer.id)).filter(
-        MinecraftServer.whitelist == True
+        MinecraftServer.whitelist == 'Yes'
     ).scalar()
-    
+
     session.close()
-    
+
     return jsonify({
         'total_servers': total_servers,
         'total_players': total_players,

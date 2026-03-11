@@ -57,32 +57,31 @@ class ScannerService:
 
     def _save_to_database(self, servers_data):
         session = get_session(self.engine)
-        
+
         for data in servers_data:
             existing = session.query(MinecraftServer).filter_by(
                 ip=data['ip'], port=data['port']
             ).first()
-            
+
             if existing:
                 existing.favicon = data['favicon']
-                existing.whitelist = data['whitelist']
                 existing.motd = data['motd']
                 existing.version = data['version']
                 existing.is_modded = data['is_modded']
                 existing.players_online = data['players_online']
-                
+
                 if data['players_online'] > existing.players_max_ever:
                     existing.players_max_ever = data['players_online']
                 if existing.players_min_ever == 0 or data['players_online'] < existing.players_min_ever:
                     existing.players_min_ever = data['players_online']
-                
+
                 existing.last_updated = datetime.utcnow()
             else:
                 server = MinecraftServer(
                     ip=data['ip'],
                     port=data['port'],
                     favicon=data['favicon'],
-                    whitelist=data['whitelist'],
+                    whitelist='Unknown',
                     motd=data['motd'],
                     version=data['version'],
                     is_modded=data['is_modded'],
@@ -92,7 +91,7 @@ class ScannerService:
                     date_added=datetime.utcnow()
                 )
                 session.add(server)
-        
+
         session.commit()
         session.close()
         print(f"Saved {len(servers_data)} servers to database")
