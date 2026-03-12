@@ -2,27 +2,6 @@
 
 A high-performance Minecraft server scanner that uses masscan to discover servers worldwide, stores results in SQLite, and provides a web interface for browsing and filtering.
 
-## Architecture
-
-```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│  scan.py    │─────►│ scan_results │─────►│  import_db  │
-│ (masscan)   │ NDJSON│   .ndjson    │ NDJSON│  (SQLite)  │
-└─────────────┘      └──────────────┘      └──────┬──────┘
-                                                   │
-                                                   ▼
-                                          ┌──────────────┐
-                                          │  servers.db  │
-                                          │   (SQLite)   │
-                                          └──────┬───────┘
-                                                   │
-                                                   ▼
-                                          ┌──────────────┐
-                                          │  Flask App   │
-                                          │  (run.py)    │
-                                          └──────────────┘
-```
-
 ## Features
 
 - **Masscan Integration**: Uses [masscan with Minecraft support](https://github.com/adrian154/masscan)
@@ -45,70 +24,50 @@ Access the web interface at `http://localhost:5000`.
 
 ### Manual Installation
 
-#### Build masscan
+1. **Build masscan**:
+   ```bash
+   cd masscan
+   make -j$(nproc)
+   sudo make install
+   ```
 
-```bash
-cd masscan
-make -j$(nproc)
-sudo make install
-```
+2. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-#### Install Python Dependencies
+3. **Run a scan**:
+   ```bash
+   python scan.py
+   ```
 
-```bash
-pip install -r requirements.txt
-```
+4. **Import to database**:
+   ```bash
+   python import_db.py
+   ```
+
+5. **Start the web server**:
+   ```bash
+   python run.py
+   ```
 
 ## Usage
 
-### 1. Run a Scan
+### Environment Variables
 
-```bash
-python scan.py
-```
-
-This runs masscan and outputs results to `scan_results.ndjson`.
-
-**Environment variables:**
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `DB_PATH` | `servers.db` | SQLite database path |
+| `SCAN_OUTPUT` | `scan_results.ndjson` | Scan output/input file |
 | `MASSCAN_PATH` | `masscan/bin/masscan` | Path to masscan binary |
 | `EXCLUDE_FILE` | `masscan/data/exclude.conf` | IP exclusion file |
-| `SCAN_OUTPUT` | `scan_results.ndjson` | Output NDJSON file |
 | `SCAN_RATE` | `20000` | Scan rate (packets/second) |
-
-### 2. Import to Database
-
-```bash
-python import_db.py
-```
-
-This reads the NDJSON file and imports servers into SQLite.
-
-**Environment variables:**
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_PATH` | `servers.db` | SQLite database path |
-| `SCAN_OUTPUT` | `scan_results.ndjson` | Input NDJSON file |
-| `BATCH_SIZE` | `1000` | Records per batch |
-
-### 3. Run the Web Server
-
-```bash
-python run.py
-```
-
-Access at `http://localhost:5000`.
-
-**Environment variables:**
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_PATH` | `servers.db` | SQLite database path |
+| `BATCH_SIZE` | `1000` | Records per batch (import) |
 | `SECRET_KEY` | (random) | Flask secret key |
 
-## Scheduled Scanning with Cron
+### Scheduled Scanning
 
-For weekly scans, use cron jobs:
+For automated scans, use cron:
 
 ```bash
 # Edit crontab
@@ -120,19 +79,21 @@ crontab -e
 
 ## API Endpoints
 
-- `GET /api/servers` - List servers with pagination, search, and filters
-- `GET /api/servers/<ip>` - Get single server by IP
-- `GET /api/stats` - Get aggregate statistics
-- `GET /api/filters` - Get available filter options
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/servers` | List servers with pagination and filters |
+| `GET /api/servers/<ip>` | Get single server by IP |
+| `GET /api/stats` | Get aggregate statistics |
+| `GET /api/filters` | Get available filter options |
 
-### Query Parameters for /api/servers
+### Query Parameters for `/api/servers`
 
 | Parameter | Description |
 |-----------|-------------|
 | `page` | Page number (default: 1) |
 | `per_page` | Items per page (default: 20) |
 | `search` | Search term for IP, MOTD, version |
-| `sort_by` | Column to sort by (`last_updated`, `players_online`, `version`, `ip`) |
+| `sort_by` | Column to sort by |
 | `sort_order` | `asc` or `desc` |
 | `version` | Filter by version |
 | `min_players` | Minimum players online |
@@ -142,13 +103,7 @@ crontab -e
 ## Running Tests
 
 ```bash
-python -m unittest discover tests
-```
-
-For verbose output:
-
-```bash
-python -m unittest discover -v tests
+python -m pytest tests/
 ```
 
 ## Project Structure
@@ -158,24 +113,27 @@ minecraft-server-scanner/
 ├── app/
 │   ├── api/          # Flask API routes
 │   ├── db/           # Database models
-│   └── main.py       # Flask app factory
+│   ├── frontend/     # Frontend routes
+│   └── scanner/      # Scanner utilities
 ├── masscan/          # Masscan submodule
 ├── templates/        # HTML templates
 ├── static/           # Static assets
+├── tests/            # Unit tests
 ├── scan.py           # Run masscan, output NDJSON
 ├── import_db.py      # Import NDJSON to SQLite
 ├── run.py            # Web server entry point
-├── requirements.txt
-└── tests/
+├── docker-compose.yml
+├── Dockerfile
+└── requirements.txt
 ```
 
 ## Performance
 
-For 175,000 servers:
+For ~175,000 servers:
 - **Scan time**: 10-30 minutes (network-bound)
 - **NDJSON parsing**: ~15-25 seconds (orjson)
-- **Database import**: ~3-8 seconds (batch inserts with transactions)
+- **Database import**: ~3-8 seconds (batch inserts)
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see [LICENSE](LICENSE) for details.
