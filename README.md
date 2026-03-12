@@ -6,7 +6,6 @@ A Docker-deployable application that scans the internet for Minecraft servers, s
 
 - **Masscan Integration**: Uses a custom [masscan fork](https://github.com/adrian154/masscan) with Minecraft protocol support
 - **IP Exclusion**: Automatically excludes sensitive IP ranges (military, government, private networks) via `exclude.conf`
-- **Scheduled Scanning**: Configurable scan frequency (default: once per day)
 - **SQLite Database**: Stores server information including:
   - Favicon, IP, port
   - MOTD (Message of the Day)
@@ -21,6 +20,18 @@ A Docker-deployable application that scans the internet for Minecraft servers, s
   - Filtering by country, version, player count
   - Sorting by any column
   - Stats dashboard
+
+## Running Tests
+
+```bash
+python -m unittest discover tests
+```
+
+For verbose output showing individual test results:
+
+```bash
+python -m unittest discover -v tests
+```
 
 ## Quick Start
 
@@ -71,12 +82,49 @@ pip install -r requirements.txt
 ### Run the Application
 
 ```bash
-# Run the web server with integrated scheduler
+# Run the web server (frontend + API)
 python run.py
-
-# Or run standalone scanner
-python run_scan.py
 ```
+
+The web server runs on `http://localhost:5000`.
+
+## Scheduled Scanning with Cron
+
+Scans are run via cron jobs - the web server does **not** include a built-in scheduler.
+
+1. **Run a single scan manually:**
+   ```bash
+   python scan_once.py
+   ```
+
+2. **Set up a cron job** (edit with `crontab -e`):
+   ```bash
+   # Run scan every Sunday at 3:00 AM
+   0 3 * * 0 cd /path/to/minecraft-server-scanner && /usr/bin/python3 scan_once.py >> /var/log/mc-scan.log 2>&1
+   ```
+
+3. **Common cron schedules:**
+   ```bash
+   # Daily at 2:00 AM
+   0 2 * * * ...
+   
+   # Every 6 hours
+   0 */6 * * * ...
+   
+   # Every Monday at 6:00 AM
+   0 6 * * 1 ...
+   ```
+
+4. **Environment variables in cron:**
+   Cron has a minimal environment, so set variables explicitly:
+   ```bash
+   0 3 * * 0 DB_PATH=/data/servers.db MASSCAN_PATH=/usr/local/bin/masscan cd /path && python scan_once.py
+   ```
+
+5. **Architecture:**
+   - **Web server** (`run.py`): Runs 24/7, serves the frontend and API
+   - **Database**: SQLite file, updated by each scan
+   - **Scanner** (`scan_once.py`): Run via cron, updates the database, then exits
 
 ## Project Structure
 
@@ -94,8 +142,9 @@ minecraft-server-scanner/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-├── run.py            # Main entry point
-└── run_scan.py       # Standalone scanner
+├── run.py            # Web server entry point
+├── scan_once.py      # Single scan script (for cron)
+└── populate_test_data.py  # Test data generator
 ```
 
 ## API Endpoints
