@@ -79,19 +79,35 @@ class TestAPIRoutes(unittest.TestCase):
 
         self.assertEqual(len(data['servers']), 1)
 
-    def test_get_servers_filter_current_players(self):
-        """Test current players filter."""
-        response = self.client.get('/api/servers?current_players=20')
+    def test_get_servers_filter_min_players(self):
+        """Test min_players filter."""
+        response = self.client.get('/api/servers?min_players=20')
         data = json.loads(response.data)
 
         self.assertEqual(len(data['servers']), 2)
 
     def test_get_servers_filter_max_players(self):
-        """Test max players filter."""
-        response = self.client.get('/api/servers?max_players=50')
+        """Test max_players filter."""
+        response = self.client.get('/api/servers?max_players=25')
         data = json.loads(response.data)
 
         self.assertEqual(len(data['servers']), 3)
+
+    def test_get_servers_filter_player_range(self):
+        """Test player range filter with min and max."""
+        response = self.client.get('/api/servers?min_players=10&max_players=50')
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data['servers']), 2)
+
+    def test_get_servers_filter_vanilla_only(self):
+        """Test vanilla_only filter excludes modded servers."""
+        response = self.client.get('/api/servers?vanilla_only=true')
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data['servers']), 3)
+        for server in data['servers']:
+            self.assertFalse(server['is_modded'])
 
     def test_get_servers_filter_modded_only(self):
         """Test modded only filter."""
@@ -171,9 +187,9 @@ class TestAPIRoutes(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(len(data['servers']), 4)
 
-    def test_filter_current_players_greater_than_max(self):
-        """Test current_players > max capacity returns empty."""
-        response = self.client.get('/api/servers?current_players=100&max_players=1000000')
+    def test_filter_min_players_greater_than_max(self):
+        """Test min_players > max_players returns empty."""
+        response = self.client.get('/api/servers?min_players=100&max_players=5')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(len(data['servers']), 0)
