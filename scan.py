@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Run masscan fork and append results to NDJSON file.
-"""
 import os
 import subprocess
 from datetime import datetime
@@ -17,7 +14,6 @@ def get_config():
 
 
 def run_scan(config):
-    """Run masscan and append results to NDJSON file."""
     cmd = [
         config['masscan_path'],
         '--excludefile', config['exclude_file'],

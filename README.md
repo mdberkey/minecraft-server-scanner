@@ -4,37 +4,11 @@ A high-performance Minecraft server scanner that uses masscan to discover server
 
 ## Features
 
-- **Masscan Integration**: Uses [masscan with Minecraft support](https://github.com/adrian154/masscan) to scan the entire IPv4 space
-- **NDJSON Output**: Scan results stored line-by-line for memory-efficient processing
-- **Batch SQLite Imports**: Transaction-based bulk inserts for maximum performance
-- **orjson Parsing**: 3-5x faster JSON processing than stdlib
-- **Web Interface**: Flask-based API with pagination, search, and filtering
+- **Masscan Integration**: Uses a [fork of masscan with Minecraft support](https://github.com/adrian154/masscan) to scan the entire IPv4 space.
+- **Database Importing**: Extracts sever info (IP, MOTD, Version, etc.) and stores im a SQLite database.
+- **Web Interface**: Flask-based API with pagination, search, and filtering.
 
 ## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Host Server                            │
-│                                                             │
-│  ┌─────────────────┐    ┌─────────────────────────────┐    │
-│  │  CLI Scripts    │    │      Docker Container       │    │
-│  │  (run manually) │    │                             │    │
-│  │                 │    │  ┌───────────────────────┐  │    │
-│  │  run_scan.sh    │───▶│  │   masscan scanner     │  │    │
-│  │  run_import.sh  │───▶│  │   import_db.py        │  │    │
-│  │                 │    │  │   Flask web app       │  │    │
-│  │                 │    │  └───────────────────────┘  │    │
-│  └─────────────────┘    └─────────────────────────────┘    │
-│           │                          │                      │
-│           └──────────┬───────────────┘                      │
-│                      ▼                                      │
-│            ┌─────────────────┐                             │
-│            │  ./data/        │                             │
-│            │  - servers.db   │                             │
-│            │  - scan_results │                             │
-│            └─────────────────┘                             │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ## Quick Start
 
@@ -52,7 +26,6 @@ docker compose build
 docker compose up -d
 ```
 
-Access the web interface at `http://localhost:5000`.
 
 ### 3. Run a Scan (from host)
 
@@ -60,7 +33,6 @@ Access the web interface at `http://localhost:5000`.
 ./scripts/run_scan.sh
 ```
 
-This scans the entire IPv4 space for Minecraft servers (port 25565). Takes 10-30 minutes depending on your network.
 
 ### 4. Import Results (from host)
 
@@ -68,7 +40,6 @@ This scans the entire IPv4 space for Minecraft servers (port 25565). Takes 10-30
 ./scripts/run_import.sh
 ```
 
-Refresh the web interface to see the imported servers.
 
 ## Manual Installation (No Docker)
 
@@ -142,54 +113,20 @@ crontab -e
 | `page` | Page number (default: 1) |
 | `per_page` | Items per page (default: 20) |
 | `search` | Search term for IP, MOTD, version |
-| `sort_by` | Column to sort by (`last_updated`, `players_online`, `version`, `ip`) |
+| `sort_by` | Column to sort by (`last_updated`, `players_online`, `version`, `ip`, `date_added`) |
 | `sort_order` | `asc` or `desc` |
 | `version` | Filter by version string |
-| `min_players` | Minimum current players |
-| `max_players` | Maximum current players |
+| `current_players` | Minimum current players |
+| `max_players` | Minimum max player capacity |
 | `modded_only` | Show only modded servers (`true`/`false`) |
 | `vanilla_only` | Show only vanilla servers (`true`/`false`) |
-| `whitelist` | Show only whitelisted servers (`true`/`false`) |
-| `no_whitelist` | Show only non-whitelisted servers (`true`/`false`) |
-| `unknown_whitelist` | Show only unknown whitelist status (`true`/`false`) |
+| `whitelist` | Show only whitelisted servers (`true`) |
+| `no_whitelist` | Show only non-whitelisted servers (`true`) |
+| `unknown_whitelist` | Show only unknown whitelist status (`true`) |
 
-## Running Tests
+## Tests
 
+Run all tests with pytest:
 ```bash
 python -m pytest tests/
 ```
-
-## Project Structure
-
-```
-minecraft-server-scanner/
-├── app/
-│   ├── api/          # Flask API routes
-│   ├── db/           # Database models
-│   └── scanner/      # Scanner utilities
-├── masscan/          # Masscan submodule
-├── templates/        # HTML templates
-├── static/           # Static assets
-├── scripts/          # Host CLI scripts
-│   ├── run_scan.sh   # Run masscan scan
-│   └── run_import.sh # Import to database
-├── tests/            # Unit tests
-├── data/             # Database and scan output (created at runtime)
-├── scan.py           # Run masscan, output NDJSON
-├── import_db.py      # Import NDJSON to SQLite
-├── run.py            # Web server entry point
-├── docker-compose.yml
-├── Dockerfile
-└── requirements.txt
-```
-
-## Performance
-
-For ~175,000 servers:
-- **Scan time**: 10-30 minutes (network-bound)
-- **NDJSON parsing**: ~15-25 seconds (orjson)
-- **Database import**: ~3-8 seconds (batch inserts)
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.

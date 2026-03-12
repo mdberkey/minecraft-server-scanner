@@ -275,7 +275,7 @@ class TestImportDB(unittest.TestCase):
             self.assertEqual(row[1], 'Test Server')
             self.assertEqual(row[2], '1.20.4')
             self.assertEqual(row[3], 5)
-            self.assertIsNone(row[4])  # whitelist should be NULL
+            self.assertEqual(row[4], 'Unknown')  # whitelist placeholder
         finally:
             os.unlink(db_path)
             os.unlink(ndjson_path)
