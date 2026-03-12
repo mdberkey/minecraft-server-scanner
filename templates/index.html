@@ -62,12 +62,12 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Min Players</label>
-                            <input type="number" class="form-control" id="min-players" min="0" placeholder="Current min">
+                            <label class="form-label">Current Players</label>
+                            <input type="number" class="form-control" id="current-players" min="0" placeholder="Filter by current">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Max Players</label>
-                            <input type="number" class="form-control" id="max-players" min="0" placeholder="Current max">
+                            <input type="number" class="form-control" id="max-players-filter" min="0" placeholder="Filter by max capacity">
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="vanilla-only">
@@ -116,7 +116,7 @@
                                         <th>Port</th>
                                         <th>MOTD</th>
                                         <th class="sort-header" data-sort="version">Version <i class="bi bi-arrow-down-up sort-icon"></i></th>
-                                        <th class="sort-header" data-sort="players_online">Players <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                                        <th class="sort-header" data-sort="players_online">Current/Max Players <i class="bi bi-arrow-down-up sort-icon"></i></th>
                                         <th>Historic Min/Max Players</th>
                                         <th>Modded</th>
                                         <th>Whitelist</th>
@@ -186,7 +186,7 @@
 
             if (filters.search) params.append('search', filters.search);
             if (filters.version) params.append('version', filters.version);
-            if (filters.min_players) params.append('min_players', filters.min_players);
+            if (filters.current_players) params.append('current_players', filters.current_players);
             if (filters.max_players) params.append('max_players', filters.max_players);
             if (filters.vanilla_only) params.append('vanilla_only', 'true');
             if (filters.modded_only) params.append('modded_only', 'true');
@@ -208,7 +208,7 @@
                     <td>${s.port}</td>
                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${s.motd || ''}</td>
                     <td>${s.version || 'Unknown'} ${s.is_modded ? '<span class="badge bg-warning">Modded</span>' : ''}</td>
-                    <td>${s.players_online}</td>
+                    <td>${s.players_online}/${s.players_max || '-'}</td>
                     <td>${s.players_min_ever || 0}-${s.players_max_ever || 0}</td>
                     <td>${s.is_modded ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>'}</td>
                     <td>${getWhitelistDisplay(s.whitelist)}</td>
@@ -249,15 +249,15 @@
             const version = document.getElementById('version-filter').value;
             if (version) filters.version = version;
 
-            const minPlayers = document.getElementById('min-players').value;
-            if (minPlayers) filters.min_players = minPlayers;
+            const currentPlayers = document.getElementById('current-players').value;
+            if (currentPlayers) filters.current_players = currentPlayers;
 
-            const maxPlayers = document.getElementById('max-players').value;
+            const maxPlayers = document.getElementById('max-players-filter').value;
             if (maxPlayers) filters.max_players = maxPlayers;
 
             filters.vanilla_only = document.getElementById('vanilla-only').checked;
             filters.modded_only = document.getElementById('modded-only').checked;
-            
+
             const whitelist = document.getElementById('whitelist-filter').value;
             if (whitelist === 'yes') {
                 filters.whitelist = true;
@@ -276,8 +276,8 @@
         document.getElementById('reset-filters').addEventListener('click', () => {
             document.getElementById('search').value = '';
             document.getElementById('version-filter').value = '';
-            document.getElementById('min-players').value = '';
-            document.getElementById('max-players').value = '';
+            document.getElementById('current-players').value = '';
+            document.getElementById('max-players-filter').value = '';
             document.getElementById('vanilla-only').checked = false;
             document.getElementById('modded-only').checked = false;
             document.getElementById('whitelist-filter').value = '';

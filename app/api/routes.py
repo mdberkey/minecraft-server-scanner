@@ -27,7 +27,7 @@ def get_servers():
     sort_by = request.args.get('sort_by', 'last_updated', type=str)
     sort_order = request.args.get('sort_order', 'desc', type=str)
     version_filter = request.args.get('version', '', type=str)
-    min_players = request.args.get('min_players', None, type=int)
+    current_players = request.args.get('current_players', None, type=int)
     max_players = request.args.get('max_players', None, type=int)
     modded_only = request.args.get('modded_only', 'false', type=str).lower() == 'true'
 
@@ -44,11 +44,11 @@ def get_servers():
     if version_filter:
         query = query.filter(Server.version.ilike(f'%{version_filter}%'))
 
-    if min_players is not None:
-        query = query.filter(Server.players_online >= min_players)
+    if current_players is not None:
+        query = query.filter(Server.players_online >= current_players)
 
     if max_players is not None:
-        query = query.filter(Server.players_online <= max_players)
+        query = query.filter(Server.players_max >= max_players)
 
     if modded_only:
         query = query.filter(Server.is_modded == True)
