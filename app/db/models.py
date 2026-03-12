@@ -1,6 +1,7 @@
+import os
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.orm import declarative_base, sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 
 Base = declarative_base()
 
@@ -19,8 +20,8 @@ class MinecraftServer(Base):
     players_online = Column(Integer, default=0)
     players_max_ever = Column(Integer, default=0)
     players_min_ever = Column(Integer, default=0)
-    date_added = Column(DateTime, default=datetime.utcnow)
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    date_added = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
@@ -40,8 +41,10 @@ class MinecraftServer(Base):
         }
 
 
-def get_engine(db_path='sqlite:///servers.db'):
-    return create_engine(db_path, echo=False, future=True)
+def get_engine(db_path=None):
+    if db_path is None:
+        db_path = os.environ.get('DB_PATH', 'servers.db')
+    return create_engine(f'sqlite:///{db_path}', echo=False, future=True)
 
 
 def get_session(engine):

@@ -16,7 +16,7 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
 
     db_path = os.environ.get('DB_PATH', 'servers.db')
-    engine = get_engine(f'sqlite:///{db_path}')
+    engine = get_engine(db_path)
     Base.metadata.create_all(engine)
 
     app.register_blueprint(api)
