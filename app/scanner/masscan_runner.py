@@ -1,8 +1,9 @@
 import subprocess
 import os
-import json
-import time
 from datetime import datetime
+
+import orjson
+
 
 class MasscanRunner:
     def __init__(self, masscan_path, exclude_file, output_file, rate=20000):
@@ -41,10 +42,10 @@ class MasscanRunner:
         with open(self.output_file, 'r') as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith('#'):
+                if not line or line.startswith('#') or line in ('[', ']'):
                     continue
                 try:
-                    obj = json.loads(line.rstrip(','))
+                    obj = orjson.loads(line.rstrip(','))
                     if not obj.get('ip') or not obj.get('ports'):
                         continue
 
@@ -61,7 +62,7 @@ class MasscanRunner:
                     if server_data:
                         results.append(server_data)
 
-                except json.JSONDecodeError:
+                except orjson.JSONDecodeError:
                     continue
 
         return results
@@ -71,8 +72,8 @@ class MasscanRunner:
             return None
 
         try:
-            response = json.loads(banner_str)
-        except json.JSONDecodeError:
+            response = orjson.loads(banner_str)
+        except orjson.JSONDecodeError:
             return None
 
         if not isinstance(response, dict) or 'description' not in response:
