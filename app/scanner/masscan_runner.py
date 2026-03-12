@@ -72,17 +72,21 @@ class MasscanRunner:
         """Parse Minecraft server status JSON from masscan banner."""
         if not banner_str:
             return None
-        
+
         try:
             # The banner is already a JSON string, but it may be escaped
             # masscan escapes it for inclusion in the outer JSON
             response = json.loads(banner_str)
         except json.JSONDecodeError:
             return None
-        
+
         if not isinstance(response, dict) or 'description' not in response:
             return None
-        
+
+        # Handle null description
+        if response.get('description') is None:
+            return None
+
         result = {
             'ip': ip,
             'port': port,
@@ -94,7 +98,7 @@ class MasscanRunner:
             'players_online': 0,
             'players_max': 0,
         }
-        
+
         # Parse MOTD (description)
         if 'description' in response:
             desc = response['description']
@@ -102,14 +106,19 @@ class MasscanRunner:
                 result['motd'] = self._parse_chat(desc)
             else:
                 result['motd'] = str(desc)
-        
+
         # Parse version
         if 'version' in response:
             version = response['version']
-            result['version'] = version.get('name', 'Unknown')
-            version_name = version.get('name', '').lower()
-            if 'forge' in version_name or 'mod' in version_name or 'fabric' in version_name:
-                result['is_modded'] = True
+            version_name = version.get('name')
+            # Handle null version name
+            if version_name is None:
+                result['version'] = None
+            else:
+                result['version'] = str(version_name)
+                version_name_lower = version_name.lower()
+                if 'forge' in version_name_lower or 'mod' in version_name_lower or 'fabric' in version_name_lower:
+                    result['is_modded'] = True
         
         # Parse players
         if 'players' in response:
@@ -133,9 +142,15 @@ class MasscanRunner:
         if isinstance(chat_obj, str):
             return chat_obj
         if not isinstance(chat_obj, dict):
-            return str(chat_obj)
-            
+            # Handle non-dict types (int, float, list, etc.) by converting to string
+            return str(chat_obj) if chat_obj is not None else ''
+
         text = chat_obj.get('text', '')
+        # Handle None text value
+        if text is None:
+            text = ''
+        else:
+            text = str(text)
         extra = chat_obj.get('extra', [])
         for item in extra:
             text += self._parse_chat(item)

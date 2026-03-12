@@ -50,7 +50,11 @@ class ScannerService:
 
                 if data['players_online'] > existing.players_max_ever:
                     existing.players_max_ever = data['players_online']
-                if existing.players_min_ever == 0 or data['players_online'] < existing.players_min_ever:
+                
+                # Update players_min_ever:
+                # - If new value is lower than current min, update
+                # - If min is 0, keep it (0 is the lowest possible player count)
+                if existing.players_min_ever != 0 and data['players_online'] < existing.players_min_ever:
                     existing.players_min_ever = data['players_online']
 
                 existing.last_updated = datetime.now(timezone.utc)
@@ -64,8 +68,8 @@ class ScannerService:
                     version=data['version'],
                     is_modded=data['is_modded'],
                     players_online=data['players_online'],
-                    players_max_ever=0,
-                    players_min_ever=0,
+                    players_max_ever=data['players_online'],  # Initialize with first observed
+                    players_min_ever=data['players_online'],  # Initialize with first observed
                     date_added=datetime.now(timezone.utc)
                 )
                 session.add(server)
