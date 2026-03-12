@@ -2,13 +2,9 @@
 import unittest
 import tempfile
 import os
-import sys
 import json
 import uuid
 from datetime import datetime, timezone
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.main import create_app
 from app.db.models import MinecraftServer, get_engine, get_session, Base

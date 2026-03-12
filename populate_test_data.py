@@ -1,19 +1,14 @@
-import os
-import sys
 from datetime import datetime, timedelta
 import random
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from app.db.models import MinecraftServer, get_engine, get_session, Base
+
 
 def populate_test_data(db_path='servers.db', count=50):
     engine = get_engine(f'sqlite:///{db_path}')
     Base.metadata.create_all(engine)
     session = get_session(engine)
 
-    # Clear existing data
-    print(f"Clearing existing data from {db_path}...")
     session.query(MinecraftServer).delete()
     session.commit()
     

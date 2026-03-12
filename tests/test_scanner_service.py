@@ -1,13 +1,9 @@
 """Integration tests for scanner service and database."""
 import unittest
 import os
-import sys
 import tempfile
 import uuid
 from datetime import datetime, timezone
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.scanner.scanner_service import ScannerService
 from app.db.models import MinecraftServer, get_engine, get_session, Base

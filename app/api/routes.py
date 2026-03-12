@@ -17,12 +17,11 @@ def get_servers():
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
-    
-    # Handle edge cases for pagination
+
     if page < 1:
         page = 1
     if per_page < 1:
-        per_page = 20  # Default to 20 if invalid
+        per_page = 20
     
     search = request.args.get('search', '', type=str)
     sort_by = request.args.get('sort_by', 'date_added', type=str)

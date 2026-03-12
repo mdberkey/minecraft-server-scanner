@@ -1,8 +1,5 @@
 import os
-import sys
 from datetime import datetime, timezone
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db.models import MinecraftServer, get_engine, get_session
 from app.scanner.masscan_runner import MasscanRunner
@@ -50,10 +47,7 @@ class ScannerService:
 
                 if data['players_online'] > existing.players_max_ever:
                     existing.players_max_ever = data['players_online']
-                
-                # Update players_min_ever:
-                # - If new value is lower than current min, update
-                # - If min is 0, keep it (0 is the lowest possible player count)
+
                 if existing.players_min_ever != 0 and data['players_online'] < existing.players_min_ever:
                     existing.players_min_ever = data['players_online']
 
@@ -68,8 +62,8 @@ class ScannerService:
                     version=data['version'],
                     is_modded=data['is_modded'],
                     players_online=data['players_online'],
-                    players_max_ever=data['players_online'],  # Initialize with first observed
-                    players_min_ever=data['players_online'],  # Initialize with first observed
+                    players_max_ever=data['players_online'],
+                    players_min_ever=data['players_online'],
                     date_added=datetime.now(timezone.utc)
                 )
                 session.add(server)

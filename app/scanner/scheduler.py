@@ -1,10 +1,6 @@
 import os
-import sys
-import time
 import threading
-from datetime import datetime, timedelta, timezone
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from datetime import datetime, timedelta
 
 from app.scanner.scanner_service import ScannerService
 

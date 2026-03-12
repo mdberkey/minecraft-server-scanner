@@ -1,12 +1,8 @@
 """Unit tests for MasscanRunner banner parsing."""
 import unittest
 import os
-import sys
 import json
 import tempfile
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.scanner.masscan_runner import MasscanRunner
 
