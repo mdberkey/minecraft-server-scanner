@@ -111,13 +111,14 @@ def import_to_db(config):
 
     batch = []
     count = 0
+    batch_time = datetime.now(timezone.utc).isoformat()
     for ip, banner_str in extract_records(log_path):
         p = parse_banner(banner_str)
         if not p: continue
 
         batch.append((
             ip, banner_str, p['motd'], p['version'], p['is_modded'],
-            p['players_online'], p['players_max'], p['favicon'], datetime.now(timezone.utc).isoformat()
+            p['players_online'], p['players_max'], p['favicon'], batch_time
         ))
         count += 1
 
