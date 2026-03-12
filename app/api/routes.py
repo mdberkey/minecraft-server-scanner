@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import func
 
-from app.db.models import MinecraftServer, get_engine, get_session
+from app.db.models import Server, get_engine, get_session
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -22,72 +22,56 @@ def get_servers():
         page = 1
     if per_page < 1:
         per_page = 20
-    
+
     search = request.args.get('search', '', type=str)
-    sort_by = request.args.get('sort_by', 'date_added', type=str)
+    sort_by = request.args.get('sort_by', 'last_updated', type=str)
     sort_order = request.args.get('sort_order', 'desc', type=str)
     version_filter = request.args.get('version', '', type=str)
     min_players = request.args.get('min_players', None, type=int)
     max_players = request.args.get('max_players', None, type=int)
-    vanilla_only = request.args.get('vanilla_only', 'false', type=str).lower() == 'true'
     modded_only = request.args.get('modded_only', 'false', type=str).lower() == 'true'
-    whitelist = request.args.get('whitelist', 'false', type=str).lower() == 'true'
-    no_whitelist = request.args.get('no_whitelist', 'false', type=str).lower() == 'true'
-    unknown_whitelist = request.args.get('unknown_whitelist', 'false', type=str).lower() == 'true'
-    
-    query = session.query(MinecraftServer)
-    
+
+    query = session.query(Server)
+
     if search:
         search_pattern = f'%{search}%'
         query = query.filter(
-            (MinecraftServer.ip.like(search_pattern)) |
-            (MinecraftServer.motd.like(search_pattern)) |
-            (MinecraftServer.version.like(search_pattern))
+            (Server.ip.like(search_pattern)) |
+            (Server.motd.like(search_pattern)) |
+            (Server.version.like(search_pattern))
         )
-    
+
     if version_filter:
-        query = query.filter(MinecraftServer.version.ilike(f'%{version_filter}%'))
-    
+        query = query.filter(Server.version.ilike(f'%{version_filter}%'))
+
     if min_players is not None:
-        query = query.filter(MinecraftServer.players_online >= min_players)
-    
+        query = query.filter(Server.players_online >= min_players)
+
     if max_players is not None:
-        query = query.filter(MinecraftServer.players_online <= max_players)
-    
-    if vanilla_only:
-        query = query.filter(MinecraftServer.is_modded == False)
-    
+        query = query.filter(Server.players_online <= max_players)
+
     if modded_only:
-        query = query.filter(MinecraftServer.is_modded == True)
+        query = query.filter(Server.is_modded == True)
 
-    if whitelist:
-        query = query.filter(MinecraftServer.whitelist == 'Yes')
-
-    if no_whitelist:
-        query = query.filter(MinecraftServer.whitelist == 'No')
-
-    if unknown_whitelist:
-        query = query.filter(MinecraftServer.whitelist == 'Unknown')
-    
     valid_sort_columns = {
-        'date_added': MinecraftServer.date_added,
-        'players_online': MinecraftServer.players_online,
-        'version': MinecraftServer.version,
-        'ip': MinecraftServer.ip,
+        'last_updated': Server.last_updated,
+        'players_online': Server.players_online,
+        'version': Server.version,
+        'ip': Server.ip,
     }
-    
-    sort_column = valid_sort_columns.get(sort_by, MinecraftServer.date_added)
-    
+
+    sort_column = valid_sort_columns.get(sort_by, Server.last_updated)
+
     if sort_order.lower() == 'asc':
         query = query.order_by(sort_column.asc())
     else:
         query = query.order_by(sort_column.desc())
-    
+
     total = query.count()
     servers = query.offset((page - 1) * per_page).limit(per_page).all()
-    
+
     session.close()
-    
+
     return jsonify({
         'servers': [s.to_dict() for s in servers],
         'pagination': {
@@ -99,15 +83,15 @@ def get_servers():
     })
 
 
-@api.route('/servers/<int:server_id>', methods=['GET'])
-def get_server(server_id):
+@api.route('/servers/<ip>', methods=['GET'])
+def get_server(ip):
     session = get_db_session()
-    server = session.query(MinecraftServer).filter_by(id=server_id).first()
+    server = session.query(Server).filter_by(ip=ip).first()
     session.close()
-    
+
     if not server:
         return jsonify({'error': 'Server not found'}), 404
-    
+
     return jsonify(server.to_dict())
 
 
@@ -115,13 +99,10 @@ def get_server(server_id):
 def get_stats():
     session = get_db_session()
 
-    total_servers = session.query(func.count(MinecraftServer.id)).scalar()
-    total_players = session.query(func.sum(MinecraftServer.players_online)).scalar() or 0
-    modded_servers = session.query(func.count(MinecraftServer.id)).filter(
-        MinecraftServer.is_modded == True
-    ).scalar()
-    whitelist_servers = session.query(func.count(MinecraftServer.id)).filter(
-        MinecraftServer.whitelist == 'Yes'
+    total_servers = session.query(func.count(Server.ip)).scalar()
+    total_players = session.query(func.sum(Server.players_online)).scalar() or 0
+    modded_servers = session.query(func.count(Server.ip)).filter(
+        Server.is_modded == True
     ).scalar()
 
     session.close()
@@ -130,20 +111,19 @@ def get_stats():
         'total_servers': total_servers,
         'total_players': total_players,
         'modded_servers': modded_servers,
-        'whitelist_servers': whitelist_servers,
     })
 
 
 @api.route('/filters', methods=['GET'])
 def get_filters():
     session = get_db_session()
-    
-    versions = session.query(MinecraftServer.version).filter(
-        MinecraftServer.version.isnot(None)
+
+    versions = session.query(Server.version).filter(
+        Server.version.isnot(None)
     ).distinct().all()
-    
+
     session.close()
-    
+
     return jsonify({
         'versions': [v[0] for v in versions if v[0]]
     })

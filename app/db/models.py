@@ -6,37 +6,28 @@ from datetime import datetime, timezone
 Base = declarative_base()
 
 
-class MinecraftServer(Base):
-    __tablename__ = 'minecraft_servers'
+class Server(Base):
+    __tablename__ = 'servers'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ip = Column(String(45), nullable=False, index=True)
-    port = Column(Integer, nullable=False, default=25565)
-    favicon = Column(Text, nullable=True)
-    whitelist = Column(String(10), default='Unknown')
+    ip = Column(String(45), primary_key=True)
+    json = Column(Text, nullable=False)
     motd = Column(String(512), nullable=True)
     version = Column(String(128), nullable=True)
     is_modded = Column(Boolean, default=False)
     players_online = Column(Integer, default=0)
-    players_max_ever = Column(Integer, default=0)
-    players_min_ever = Column(Integer, default=0)
-    date_added = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    players_max = Column(Integer, default=0)
+    favicon = Column(Text, nullable=True)
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
-            'id': self.id,
             'ip': self.ip,
-            'port': self.port,
-            'favicon': self.favicon,
-            'whitelist': self.whitelist,
             'motd': self.motd,
             'version': self.version,
             'is_modded': self.is_modded,
             'players_online': self.players_online,
-            'players_max_ever': self.players_max_ever,
-            'players_min_ever': self.players_min_ever,
-            'date_added': self.date_added.isoformat() if self.date_added else None,
+            'players_max': self.players_max,
+            'favicon': self.favicon,
             'last_updated': self.last_updated.isoformat() if self.last_updated else None,
         }
 
