@@ -96,7 +96,6 @@ crontab -e
 | `sort_by` | Column to sort by |
 | `sort_order` | `asc` or `desc` |
 | `version` | Filter by version |
-| `min_players` | Minimum players online |
 | `max_players` | Maximum players online |
 | `modded_only` | Show only modded servers |
 
