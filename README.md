@@ -15,8 +15,7 @@ A high-performance Minecraft server scanner that uses masscan to discover server
 ### 1. Clone the Repository
 
 ```bash
-git clone --recurse-submodules https://github.com/yourusername/minecraft-server-scanner.git
-cd minecraft-server-scanner
+git clone --recurse-submodules git@github.com:mdberkey/minecraft-server-scanner.git
 ```
 
 ### 2. Build and Start the Web App
