@@ -1,0 +1,22 @@
+services:
+  minecraft-server-scanner:
+    build: .
+    container_name: minecraft-server-scanner
+    image: minecraft-server-scanner:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/data
+    environment:
+      - DB_PATH=/data/servers.db
+      - SECRET_KEY=change-this-to-a-random-secret-key
+    restart: unless-stopped
+    networks:
+      - scanner-network
+
+volumes:
+  scanner-data:
+
+networks:
+  scanner-network:
+    driver: bridge

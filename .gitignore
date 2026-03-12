@@ -205,3 +205,24 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Minecraft Server Scanner
+servers.db
+*.db
+scan_results.json
+test_servers.ndjson
+/data/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+tests/.test_dbs/
+
+# Masscan submodule build artifacts
+masscan/bin/
+masscan/tmp/
+masscan/*.o
+masscan/masscan
+masscan/masscan_db
