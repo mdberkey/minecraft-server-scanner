@@ -113,7 +113,7 @@ crontab -e
 | `page` | Page number (default: 1) |
 | `per_page` | Items per page (default: 20) |
 | `search` | Search term for IP, MOTD, version |
-| `sort_by` | Column to sort by (`last_updated`, `players_online`, `version`, `ip`, `date_added`) |
+| `sort_by` | Column to sort by (`last_updated`, `players_online`, `version`, `ip`) |
 | `sort_order` | `asc` or `desc` |
 | `version` | Filter by version string |
 | `current_players` | Minimum current players |
