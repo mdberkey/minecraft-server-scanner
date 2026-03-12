@@ -23,13 +23,13 @@ class TestAPIRoutes(unittest.TestCase):
         now = datetime.now(timezone.utc)
         test_servers = [
             Server(ip='192.168.1.100', json='{}', motd='Hypixel', version='1.8-1.20',
-                   players_online=50000, is_modded=False, players_max=100000, last_updated=now),
+                   players_online=50000, is_modded=False, players_max=100000, whitelist=1, last_updated=now),
             Server(ip='10.0.0.50', json='{}', motd='Survival Server', version='Paper 1.20.4',
-                   players_online=25, is_modded=False, players_max=100, last_updated=now),
+                   players_online=25, is_modded=False, players_max=100, whitelist=0, last_updated=now),
             Server(ip='172.16.0.1', json='{}', motd='Modded', version='1.19.2 Forge',
-                   players_online=10, is_modded=True, players_max=50, last_updated=now),
+                   players_online=10, is_modded=True, players_max=50, whitelist=None, last_updated=now),
             Server(ip='8.8.8.8', json='{}', motd='Test Server', version='1.20.1',
-                   players_online=0, is_modded=False, players_max=20, last_updated=now),
+                   players_online=0, is_modded=False, players_max=20, whitelist=None, last_updated=now),
         ]
 
         for server in test_servers:
@@ -116,6 +116,31 @@ class TestAPIRoutes(unittest.TestCase):
 
         self.assertEqual(len(data['servers']), 1)
         self.assertTrue(data['servers'][0]['is_modded'])
+
+    def test_get_servers_filter_whitelist_enabled(self):
+        """Test whitelist filter for enabled whitelist."""
+        response = self.client.get('/api/servers?whitelist=true')
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data['servers']), 1)
+        self.assertEqual(data['servers'][0]['whitelist'], 1)
+
+    def test_get_servers_filter_no_whitelist(self):
+        """Test whitelist filter for disabled whitelist."""
+        response = self.client.get('/api/servers?no_whitelist=true')
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data['servers']), 1)
+        self.assertEqual(data['servers'][0]['whitelist'], 0)
+
+    def test_get_servers_filter_unknown_whitelist(self):
+        """Test whitelist filter for unknown whitelist status."""
+        response = self.client.get('/api/servers?unknown_whitelist=true')
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data['servers']), 2)
+        for server in data['servers']:
+            self.assertIsNone(server['whitelist'])
 
     def test_get_servers_sort_by_players(self):
         """Test sorting by players."""

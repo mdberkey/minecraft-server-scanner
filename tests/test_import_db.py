@@ -267,7 +267,7 @@ class TestImportDB(unittest.TestCase):
             # Verify database
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
-            cursor.execute("SELECT ip, motd, version, players_online FROM servers")
+            cursor.execute("SELECT ip, motd, version, players_online, whitelist FROM servers")
             row = cursor.fetchone()
             conn.close()
 
@@ -275,6 +275,7 @@ class TestImportDB(unittest.TestCase):
             self.assertEqual(row[1], 'Test Server')
             self.assertEqual(row[2], '1.20.4')
             self.assertEqual(row[3], 5)
+            self.assertIsNone(row[4])  # whitelist should be NULL
         finally:
             os.unlink(db_path)
             os.unlink(ndjson_path)

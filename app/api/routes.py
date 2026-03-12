@@ -31,6 +31,9 @@ def get_servers():
     max_players = request.args.get('max_players', None, type=int)
     modded_only = request.args.get('modded_only', 'false', type=str).lower() == 'true'
     vanilla_only = request.args.get('vanilla_only', 'false', type=str).lower() == 'true'
+    whitelist_enabled = request.args.get('whitelist', 'false', type=str).lower() == 'true'
+    no_whitelist = request.args.get('no_whitelist', 'false', type=str).lower() == 'true'
+    unknown_whitelist = request.args.get('unknown_whitelist', 'false', type=str).lower() == 'true'
 
     query = session.query(Server)
 
@@ -56,6 +59,15 @@ def get_servers():
 
     if vanilla_only:
         query = query.filter(Server.is_modded == False)
+
+    if whitelist_enabled:
+        query = query.filter(Server.whitelist == 1)
+
+    if no_whitelist:
+        query = query.filter(Server.whitelist == 0)
+
+    if unknown_whitelist:
+        query = query.filter(Server.whitelist.is_(None))
 
     valid_sort_columns = {
         'last_updated': Server.last_updated,

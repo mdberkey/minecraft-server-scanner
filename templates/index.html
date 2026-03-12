@@ -160,9 +160,9 @@
         }
 
         function getWhitelistDisplay(value) {
-            if (value === 'Yes') {
+            if (value === 1) {
                 return '<i class="bi bi-lock text-warning"></i> Yes';
-            } else if (value === 'No') {
+            } else if (value === 0) {
                 return '<i class="bi bi-unlock text-success"></i> No';
             } else {
                 return '<i class="bi bi-question-circle text-muted"></i> Unknown';

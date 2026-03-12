@@ -17,6 +17,7 @@ class Server(Base):
     players_online = Column(Integer, default=0)
     players_max = Column(Integer, default=0)
     favicon = Column(Text, nullable=True)
+    whitelist = Column(Integer, nullable=True)  # 0=False, 1=True, NULL=Unknown
     last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
@@ -28,6 +29,7 @@ class Server(Base):
             'players_online': self.players_online,
             'players_max': self.players_max,
             'favicon': self.favicon,
+            'whitelist': self.whitelist,
             'last_updated': self.last_updated.isoformat() if self.last_updated else None,
         }
 

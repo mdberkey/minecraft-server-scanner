@@ -91,6 +91,7 @@ def import_to_db(config):
             players_online INTEGER,
             players_max INTEGER,
             favicon TEXT,
+            whitelist INTEGER,
             last_updated TEXT
         )
     """)
@@ -100,13 +101,13 @@ def import_to_db(config):
     cur.execute("PRAGMA temp_store=MEMORY")
 
     upsert_sql = """
-        INSERT INTO servers (ip, json, motd, version, is_modded, players_online, players_max, favicon, last_updated)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO servers (ip, json, motd, version, is_modded, players_online, players_max, favicon, whitelist, last_updated)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(ip) DO UPDATE SET
             json=excluded.json, motd=excluded.motd, version=excluded.version,
             is_modded=excluded.is_modded, players_online=excluded.players_online,
             players_max=excluded.players_max, favicon=excluded.favicon,
-            last_updated=excluded.last_updated
+            whitelist=excluded.whitelist, last_updated=excluded.last_updated
     """
 
     batch = []
@@ -118,7 +119,7 @@ def import_to_db(config):
 
         batch.append((
             ip, banner_str, p['motd'], p['version'], p['is_modded'],
-            p['players_online'], p['players_max'], p['favicon'], batch_time
+            p['players_online'], p['players_max'], p['favicon'], None, batch_time
         ))
         count += 1
 
