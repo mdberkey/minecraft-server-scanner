@@ -9,7 +9,8 @@ services:
       - ./data:/data
     environment:
       - DB_PATH=/data/servers.db
-      - SECRET_KEY=change-this-to-a-random-secret-key
+      - SECRET_KEY=random-secret-key
+      - SCAN_RATE=10000
     restart: unless-stopped
     networks:
       - scanner-network

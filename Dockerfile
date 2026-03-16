@@ -25,7 +25,7 @@ RUN mkdir -p /data
 # Default environment variables
 ENV DB_PATH=/data/servers.db
 ENV SCAN_OUTPUT=/data/scan_results.ndjson
-ENV MASSCAN_PATH=/usr/local/bin/masscan
+ENV MASSCAN_PATH=/usr/bin/masscan
 ENV EXCLUDE_FILE=/app/masscan/data/exclude.conf
 
 EXPOSE 5000

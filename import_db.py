@@ -61,15 +61,18 @@ def extract_records(log_path):
             if not line or line[0] in ('#', '[', ']', ','):
                 continue
             try:
-                server = orjson.loads(line.rstrip(','))
-                ports = server.get('ports', [])
-                if not ports: continue
-                
-                banner = ports[0].get('service', {}).get('banner')
+                record = orjson.loads(line.rstrip(','))
+                # Skip non-banner records
+                if record.get('rec_type') != 'banner':
+                    continue
+
+                # Get banner from masscan's output format
+                banner = record.get('data', {}).get('banner')
                 if banner:
-                    yield (server['ip'], banner)
-            except (orjson.JSONDecodeError, IndexError):
+                    yield (record['ip'], banner)
+            except (orjson.JSONDecodeError, KeyError):
                 continue
+
 
 def import_to_db(config):
     db_path = config['db_path']

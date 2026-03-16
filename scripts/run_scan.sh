@@ -7,7 +7,7 @@ DATA_DIR="$PROJECT_DIR/data"
 
 mkdir -p "$DATA_DIR"
 
-RATE="${1:-20000}"
+RATE="${1:-10000}"
 SCAN_OUTPUT="$DATA_DIR/scan_results.ndjson"
 
 echo "=== Minecraft Server Scanner ==="
