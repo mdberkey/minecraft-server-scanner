@@ -5,7 +5,7 @@ A high-performance Minecraft server scanner that uses masscan to discover server
 ## Features
 
 - **Masscan Integration**: Uses a [fork of masscan with Minecraft support](https://github.com/adrian154/masscan) to scan the entire IPv4 space.
-- **Database Importing**: Extracts sever info (IP, MOTD, Version, etc.) and stores im a SQLite database.
+- **Database Importing**: Extracts server info (IP, MOTD, Version, etc.) and stores im a SQLite database.
 - **Web Interface**: Flask-based API with pagination, search, and filtering.
 ![frontend](/images/frontend.png)
 
